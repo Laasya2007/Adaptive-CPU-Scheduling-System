@@ -1,0 +1,54 @@
+# Ignore MSYS/MinGW stuff
+mingw32/
+mingw64/
+clang64/
+clangarm64/
+ucrt64/
+msys2/
+usr/
+var/
+etc/
+dev/
+opt/
+tmp/
+home/
+installerResources/
+
+# Ignore logs / installers
+InstallationLog
+installer
+uninstall*
+
+# Python
+__pycache__/
+*.pyc
+
+# Build files
+*.exe
+*.out
+
+# OS
+Thumbs.db
+# MSYS/MinGW junk files
+*.ico
+*.ini
+*.dat
+*.xml
+*.cmd
+*.bat
+
+# Installer / logs
+InstallationLog.txt
+installer*
+autorebase.bat
+
+# MSYS shell
+msys2_shell.cmd
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Executables
+*.exe
+*.out

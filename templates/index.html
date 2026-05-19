@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CPU Scheduling</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { background:#0f172a; color:white; text-align:center; font-family:Arial; }
+.bt-input { padding:8px; margin:5px; width:80px; }
+button { padding:10px; margin:10px; border:none; border-radius:5px; color:white; cursor:pointer; }
+.add{background:#22c55e;} 
+.run{background:#06b6d4;} 
+.reset{background:#ef4444;}
+.clear{background:#f59e0b;}
+
+.card { background:#1e293b; margin:20px auto; padding:15px; width:60%; border-radius:10px; }
+
+table { margin:auto; border-collapse:collapse; }
+td,th{border:1px solid white;padding:6px;}
+</style>
+</head>
+
+<body>
+
+<h1>CPU Scheduling System</h1>
+
+<div id="process-container">
+    <input class="bt-input" type="number" placeholder="P1 BT">
+</div>
+
+<button class="add" onclick="addProcess()">Add Process</button>
+<button class="run" onclick="runScheduler()">Run Scheduler</button>
+<button class="reset" onclick="resetApp()">Reset UI</button>
+<button class="clear" onclick="clearHistory()">Clear Learning</button>
+
+<div class="card" id="output"></div>
+
+<div class="card">
+<h3>Decision</h3>
+<p id="decision"></p>
+</div>
+
+<div class="card">
+<h3>ML Prediction</h3>
+<p id="ml"></p>
+</div>
+
+<div class="card">
+<h3>Tracker</h3>
+<p id="tracker"></p>
+</div>
+
+<div class="card">
+<h3>History</h3>
+<div id="history"></div>
+</div>
+
+<div style="width:400px;height:250px;margin:auto;">
+<canvas id="myChart"></canvas>
+</div>
+
+<script>
+let chart=null;
+
+// ADD PROCESS
+function addProcess(){
+    let c=document.getElementById("process-container");
+    let input=document.createElement("input");
+    input.type="number";
+    input.className="bt-input";
+    input.placeholder="P"+(c.children.length+1)+" BT";
+    c.appendChild(input);
+}
+
+// GET INPUT
+function getBT(){
+    let arr=[];
+    document.querySelectorAll(".bt-input").forEach(i=>{
+        if(i.value!=="") arr.push(parseInt(i.value));
+    });
+    return arr;
+}
+
+// RUN
+async function runScheduler(){
+    let bt=getBT();
+
+    if(bt.length===0){
+        alert("Enter values");
+        return;
+    }
+
+    let res=await fetch("/run",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({bt:bt})
+    });
+
+    let data=await res.json();
+
+    if(data.error){
+        alert(data.error);
+        return;
+    }
+
+    document.getElementById("output").innerText=data.output;
+    document.getElementById("decision").innerText=data.decision+" | Var: "+data.variance;
+    document.getElementById("ml").innerText="Predicted: "+data.prediction;
+    document.getElementById("tracker").innerText="Runs: "+data.history.length;
+
+    // HISTORY TABLE
+    let table="<table><tr><th>Run</th><th>Avg BT</th><th>Decision</th></tr>";
+
+    for(let i=0;i<data.history.length;i++){
+        let r=data.history[i];
+        table+=`<tr>
+        <td>${r.run}</td>
+        <td>${r.avg_bt.toFixed(2)}</td>
+        <td>${r.decision}</td>
+        </tr>`;
+    }
+
+    table+="</table>";
+    document.getElementById("history").innerHTML=table;
+
+    // CHART
+    let ctx=document.getElementById("myChart");
+    if(chart) chart.destroy();
+
+    chart=new Chart(ctx,{
+        type:"bar",
+        data:{
+            labels:["WT","TAT"],
+            datasets:[{
+                label:"Performance",
+                data:[data.wt,data.tat],
+                backgroundColor:["#22c55e","#f97316"]
+            }]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false
+        }
+    });
+}
+
+// RESET UI ONLY
+async function resetApp(){
+    document.getElementById("process-container").innerHTML=
+    '<input class="bt-input" type="number" placeholder="P1 BT">';
+
+    document.getElementById("output").innerText="";
+    document.getElementById("decision").innerText="";
+    document.getElementById("ml").innerText="";
+    document.getElementById("tracker").innerText="";
+    document.getElementById("history").innerHTML="";
+
+    if(chart) chart.destroy();
+
+    await fetch("/reset",{method:"POST"});
+}
+
+// CLEAR ML HISTORY
+async function clearHistory(){
+    await fetch("/clear",{method:"POST"});
+    alert("Learning Cleared");
+}
+</script>
+
+</body>
+</html>
